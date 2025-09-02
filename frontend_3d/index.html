@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ToDo Front</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>📝 ToDo Frontend</h1>
+    
+    <div class="sections-grid">
+      <section class="fade-in">
+        <h2>🔍 Teste da rota</h2>
+        <div id="teste-text">Carregando...</div>
+      </section>
+
+      <section class="fade-in">
+        <h2>👥 Users</h2>
+        <ul id="users-list">
+          <li class="loading">Carregando...</li>
+        </ul>
+      </section>
+
+      <section class="fade-in">
+        <h2>📋 Todos</h2>
+        <ul id="todos-list">
+          <li class="loading">Carregando...</li>
+        </ul>
+      </section>
+
+      <section class="fade-in">
+        <h2>✅ Tasks</h2>
+        <ul id="tasks-list">
+          <li class="loading">Carregando...</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <script type="module">
+    // Simulação dos dados que você tem
+    setTimeout(() => {
+      // Simula o carregamento dos dados
+      document.getElementById('teste-text').textContent = 'Conexão estabelecida com sucesso!';
+      
+      const usersList = document.getElementById('users-list');
+      usersList.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const li = document.createElement('li');
+        li.textContent = `${i} - Novo Usuário`;
+        usersList.appendChild(li);
+      }
+      
+      const todosList = document.getElementById('todos-list');
+      todosList.innerHTML = '<li>Nenhum item</li>';
+      
+      const tasksList = document.getElementById('tasks-list');
+      tasksList.innerHTML = '<li>Nenhum item</li>';
+    }, 1500);
+
+    // import { initFront } from './js/render.js';
+    // initFront();
+  </script>
+</body>
+</html>

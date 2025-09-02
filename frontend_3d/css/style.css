@@ -1,0 +1,199 @@
+   * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .sections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      margin-top: 20px;
+    }
+
+    section {
+      background: white;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    section:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    section h2 {
+      color: #4a5568;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #e2e8f0;
+      position: relative;
+      font-weight: 600;
+    }
+
+    section h2::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      border-radius: 2px;
+    }
+
+    #teste-text {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      font-weight: 500;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    li {
+      background: #f8fafc;
+      margin-bottom: 12px;
+      padding: 15px 20px;
+      border-radius: 10px;
+      border-left: 4px solid #e2e8f0;
+      transition: all 0.3s ease;
+      position: relative;
+      font-weight: 500;
+    }
+
+    li:hover {
+      background: #edf2f7;
+      border-left-color: #667eea;
+      transform: translateX(5px);
+    }
+
+    /* Estilos específicos para cada seção */
+    #users-list li {
+      border-left-color: #48bb78;
+      background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    }
+
+    #users-list li:hover {
+      border-left-color: #38a169;
+      background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+    }
+
+    #todos-list li {
+      border-left-color: #ed8936;
+      background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+    }
+
+    #todos-list li:hover {
+      border-left-color: #dd6b20;
+      background: linear-gradient(135deg, #fff5eb 0%, #fed7aa 100%);
+    }
+
+    #tasks-list li {
+      border-left-color: #805ad5;
+      background: linear-gradient(135deg, #faf5ff 0%, #e9d8fd 100%);
+    }
+
+    #tasks-list li:hover {
+      border-left-color: #6b46c1;
+      background: linear-gradient(135deg, #f3e8ff 0%, #ddd6fe 100%);
+    }
+
+    /* Indicadores de loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #718096;
+      font-style: italic;
+    }
+
+    .loading::before {
+      content: '';
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e2e8f0;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+      
+      h1 {
+        font-size: 2.2rem;
+        margin-bottom: 30px;
+      }
+      
+      .sections-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      section {
+        padding: 20px;
+      }
+    }
+
+    /* Animações de entrada */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    section:nth-child(1) { animation-delay: 0.1s; }
+    section:nth-child(2) { animation-delay: 0.2s; }
+    section:nth-child(3) { animation-delay: 0.3s; }
+    section:nth-child(4) { animation-delay: 0.4s; }
