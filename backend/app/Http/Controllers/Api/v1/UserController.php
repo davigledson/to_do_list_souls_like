@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Todo;
+
 class UserController extends Controller
 {
       // Listar todos os usuários
@@ -29,6 +31,15 @@ class UserController extends Controller
         ]);
 
         $user = User::create($data);
+
+         // cria o Todo vinculado ao usuário
+        $todo = Todo::create([
+            'title' => "Lista de {$user->name}", // exemplo: "Lista de João"
+            'user_id' => $user->id,
+        ]);
+
+        // opcional: anexar a info do todo no retorno
+        $user->todo = $todo;
 
         return response()->json($user, 201);
     }

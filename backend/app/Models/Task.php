@@ -35,4 +35,10 @@ class Task extends Model
             'updated_at'   => now(),
         ]);
     }
+
+    public function user()
+{
+    return $this->belongsTo(User::class);
+}
+
 }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Task;
+use App\Models\User; // se você tem User vinculado
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
@@ -40,7 +42,15 @@ class TaskController extends Controller
             'is_completed' => 'sometimes|boolean',
         ]);
 
+        // antes da atualização, verifica se a task ainda NÃO estava concluída
+        $wasCompleted = $task->is_completed;
+
         $task->update($data);
+
+        // se antes não estava concluída e agora foi concluída → recompensa o usuário
+        if (!$wasCompleted && $task->is_completed) {
+            $this->rewardUser($task->todo->user_id);
+        }
 
         return $task;
     }
@@ -49,5 +59,16 @@ class TaskController extends Controller
     {
         $task->delete();
         return response()->noContent();
+    }
+
+    private function rewardUser($userId)
+    {
+        $user = User::find($userId);
+
+        if ($user) {
+            // adiciona 10 moedas (pode ser configurável)
+            $user->balance = $user->balance + 10;
+            $user->save();
+        }
     }
 }
