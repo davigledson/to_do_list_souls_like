@@ -13,7 +13,7 @@ export interface User {
 }
 
 export default class UserService extends BaseService {
-  private static axiosInstance = this.createAxiosInstance('user');
+  private static axiosInstance = this.createAxiosInstance('users');
 
   static async listarTodos(): Promise<User[]> {
     try {

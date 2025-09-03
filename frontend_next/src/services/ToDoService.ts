@@ -13,7 +13,7 @@ export interface ToDo {
 
 
 export default class ToDoService extends BaseService {
-  private static axiosInstance = this.createAxiosInstance('todo');
+  private static axiosInstance = this.createAxiosInstance('todos');
 
   static async listarTodos(): Promise<ToDo[]> {
     try {

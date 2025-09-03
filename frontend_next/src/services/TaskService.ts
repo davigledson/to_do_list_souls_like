@@ -13,7 +13,7 @@ export interface Task {
 }
 
 export default class TaskService extends BaseService {
-  private static axiosInstance = this.createAxiosInstance('task');
+  private static axiosInstance = this.createAxiosInstance('tasks');
 
   static async listarTodos(): Promise<Task[]> {
     try {
