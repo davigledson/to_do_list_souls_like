@@ -13,7 +13,8 @@ return new class extends Migration
 {
     Schema::create('todos', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade'); // dono da lista
+       // $table->foreignId('user_id')->constrained()->onDelete('cascade'); // dono da lista
+        $table->string('user_name')->nullable();
         $table->string('title');
         $table->timestamps();
     });
@@ -36,6 +37,6 @@ return new class extends Migration
     {
         //
         Schema::dropIfExists('todos');
-        Schema::dropIfExists('task');
+        Schema::dropIfExists('tasks');
     }
 };

@@ -1,86 +1,72 @@
 import BaseService from './BaseService';
-export interface ToDo {
-  _key: string;
-  _id: string;
-  _rev: string;
+
+export interface Todo {
+  id?: number;
   title: string;
-  description?: string;
-  completed: boolean;
-  userId: string; // FK do usuário dono da task
-  createdAt?: string;
-  updatedAt?: string;
+  user_name?: string;
+  created_at?: string;
+  updated_at?: string;
+  tasks?: Task[];
 }
 
+export interface Task {
+  id?: number;
+  todo_id: number;
+  title: string;
+  description?: string;
+  is_completed: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
-export default class ToDoService extends BaseService {
+export default class TodoService extends BaseService {
   private static axiosInstance = this.createAxiosInstance('todos');
 
-  static async listarTodos(): Promise<ToDo[]> {
+  static async listarTodos(): Promise<Todo[]> {
     try {
       const response = await this.axiosInstance.get('/');
       return response.data;
     } catch (error) {
-      this.handleError(error, 'Erro ao buscar ToDos');
+      this.handleError(error, 'Erro ao buscar Todos');
       throw error;
     }
   }
 
-  static async buscarPorId(id: string): Promise<ToDo> {
+  static async buscarPorId(id: number): Promise<Todo> {
     try {
       const response = await this.axiosInstance.get(`/${id}`);
       return response.data;
     } catch (error) {
-      this.handleError(error, `Erro ao buscar ToDo ID ${id}`);
+      this.handleError(error, `Erro ao buscar Todo ID ${id}`);
       throw error;
     }
   }
 
-  static async criar(todo: Omit<ToDo, '_id' | '_key' | '_rev'>): Promise<ToDo> {
+  static async criar(todo: Omit<Todo, 'id' | 'created_at' | 'updated_at' | 'tasks'>): Promise<Todo> {
     try {
       const response = await this.axiosInstance.post('/', todo);
       return response.data;
     } catch (error) {
-      this.handleError(error, 'Erro ao criar ToDo');
+      this.handleError(error, 'Erro ao criar Todo');
       throw error;
     }
   }
 
-  static async atualizar(id: string, todo: ToDo): Promise<ToDo> {
+  static async atualizar(id: number, todo: Partial<Todo>): Promise<Todo> {
     try {
       const response = await this.axiosInstance.put(`/${id}`, todo);
       return response.data;
     } catch (error) {
-      this.handleError(error, `Erro ao atualizar ToDo ID ${id}`);
+      this.handleError(error, `Erro ao atualizar Todo ID ${id}`);
       throw error;
     }
   }
 
-  static async atualizarParcial(id: string, updates: Partial<ToDo>): Promise<ToDo> {
-    try {
-      const response = await this.axiosInstance.patch(`/${id}`, updates);
-      return response.data;
-    } catch (error) {
-      this.handleError(error, `Erro ao atualizar parcialmente ToDo ID ${id}`);
-      throw error;
-    }
-  }
-
-  static async deletar(id: string): Promise<void> {
+  static async deletar(id: number): Promise<void> {
     try {
       await this.axiosInstance.delete(`/${id}`);
     } catch (error) {
-      this.handleError(error, `Erro ao deletar ToDo ID ${id}`);
-      throw error;
-    }
-  }
-
-  // Aqui dá pra encaixar a função de "dar criptomoeda"
-  static async completarTask(id: string): Promise<ToDo> {
-    try {
-      const response = await this.axiosInstance.patch(`/${id}/complete`);
-      return response.data;
-    } catch (error) {
-      this.handleError(error, `Erro ao completar ToDo ID ${id}`);
+      this.handleError(error, `Erro ao deletar Todo ID ${id}`);
       throw error;
     }
   }

@@ -8,7 +8,6 @@ export interface User {
   name: string;
   email: string;
   password?: string; // opcional se não retornar para o cliente
-  role?: 'admin' | 'user'; // papel do usuário
   balance?: number; // exemplo: saldo de criptomoeda
 }
 

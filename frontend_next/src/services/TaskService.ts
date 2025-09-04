@@ -6,7 +6,6 @@ export interface Task {
   title: string;
   description?: string;
   completed: boolean;
-  userId: string; 
   reward?: number; // quantidade de criptomoeda que o usuário ganha ao completar
   createdAt?: string;
   updatedAt?: string;
