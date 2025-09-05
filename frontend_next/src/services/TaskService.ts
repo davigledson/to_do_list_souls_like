@@ -36,8 +36,11 @@ export default class TaskService extends BaseService {
   }
 
   static async completar(id: number): Promise<Task> {
-    const response = await this.axiosInstance.patch(`/${id}`);
-    response.data.is_completed = 1;
+   const response = await this.axiosInstance.patch(`/${id}`, {
+    is_completed: true
+  });
+     console.log('TaskService.completar - Dados que serão enviados:',  response.data);
+   
     return response.data;
   }
 

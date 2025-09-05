@@ -1,8 +1,116 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TodoService, { Todo, Task } from '@/services/TodoService';
 import TaskService from '@/services/TaskService';
+
+// Componente de partículas animadas para o fundo
+const AnimatedBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Configurar tamanho do canvas
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Partículas
+    const particles: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      opacity: number;
+      color: string;
+    }> = [];
+
+    const colors = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
+
+    // Criar partículas
+    for (let i = 0; i < 500; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 5 + 1,
+        opacity: Math.random() * 0.3 + 0.1,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
+
+    // Animação
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((particle, index) => {
+        // Atualizar posição
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        // Reposicionar se sair da tela
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        if (particle.y > canvas.height) particle.y = 0;
+
+        // Desenhar partícula
+        ctx.save();
+        ctx.globalAlpha = particle.opacity;
+        ctx.fillStyle = particle.color;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Desenhar conexões entre partículas próximas
+        particles.slice(index + 1).forEach(otherParticle => {
+          const dx = particle.x - otherParticle.x;
+          const dy = particle.y - otherParticle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 150) {
+            ctx.save();
+            ctx.globalAlpha = (150 - distance) / 150 * 0.1;
+            ctx.strokeStyle = particle.color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particle.x, particle.y);
+            ctx.lineTo(otherParticle.x, otherParticle.y);
+            ctx.stroke();
+            ctx.restore();
+          }
+        });
+      });
+
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none z-0"
+      style={{ background: 'linear-gradient(135deg, #000000 0%, #836816 100%)' }}
+    />
+  );
+};
 
 const TodosTasksPage = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -74,11 +182,27 @@ const TodosTasksPage = () => {
 
   const handleCompleteTask = async (taskId: number) => {
     try {
-      await TaskService.completar(taskId);
+      const completedTask = await TaskService.completar(taskId);
+      console.log('Task completada:', completedTask);
+      
       if (selectedTodo?.id) {
-        const updatedTodo = await TodoService.buscarPorId(selectedTodo.id);
+        // Atualizar o estado local imediatamente
+        const updatedTasks = selectedTodo.tasks?.map(task => 
+          task.id === taskId 
+            ? { ...task, is_completed: true }
+            : task
+        ) || [];
+        
+        const updatedTodo = { ...selectedTodo, tasks: updatedTasks };
         setSelectedTodo(updatedTodo);
         setTodos(todos.map(t => t.id === selectedTodo.id ? updatedTodo : t));
+        
+        // Depois recarregar do servidor para garantir sincronização
+        setTimeout(async () => {
+          const refreshedTodo = await TodoService.buscarPorId(selectedTodo.id);
+          setSelectedTodo(refreshedTodo);
+          setTodos(todos.map(t => t.id === selectedTodo.id ? refreshedTodo : t));
+        }, 200);
       }
     } catch (error) {
       console.error('Erro ao completar task:', error);
@@ -118,68 +242,106 @@ const TodosTasksPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando...</p>
+      <div className="min-h-screen relative">
+        <AnimatedBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-white/30 border-t-white mx-auto mb-4"></div>
+              <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-purple-200/30 border-t-purple-300 animate-pulse mx-auto"></div>
+            </div>
+            <p className="text-white font-medium text-lg">Carregando todos...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen relative">
+      <AnimatedBackground />
+      
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
         
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex justify-between items-center">
+        {/* Header Melhorado */}
+        <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 mb-8 hover:shadow-3xl transition-all duration-500 hover:bg-white/95">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Todos & Tasks</h1>
-              <p className="text-gray-600">{todos.length} todos | {selectedTodo?.tasks?.length || 0} tasks</p>
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Todos & Tasks
+              </h1>
+              <div className="flex items-center gap-4 mt-3">
+                <div className="flex items-center gap-2 px-4 py-2 bg-purple-100/80 rounded-full backdrop-blur-sm">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                  <span className="text-purple-700 font-medium text-sm">{todos.length} todos</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-blue-100/80 rounded-full backdrop-blur-sm">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-blue-700 font-medium text-sm">{selectedTodo?.tasks?.length || 0} tasks</span>
+                </div>
+              </div>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => setShowTodoForm(!showTodoForm)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                className="group relative overflow-hidden bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-2xl font-medium transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:scale-105"
               >
-                {showTodoForm ? 'Cancelar' : '+ Todo'}
+                <span className="relative z-10 flex items-center gap-2">
+                  <span className="text-lg transition-transform duration-300 group-hover:rotate-180">{showTodoForm ? '✕' : '+'}</span>
+                  {showTodoForm ? 'Cancelar' : 'Novo Todo'}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
               <button
                 onClick={() => setShowTaskForm(!showTaskForm)}
                 disabled={!selectedTodo}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:bg-gray-300"
+                className="group relative overflow-hidden bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-2xl font-medium transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-lg"
               >
-                {showTaskForm ? 'Cancelar' : '+ Task'}
+                <span className="relative z-10 flex items-center gap-2">
+                  <span className="text-lg transition-transform duration-300 group-hover:rotate-180">{showTaskForm ? '✕' : '+'}</span>
+                  {showTaskForm ? 'Cancelar' : 'Nova Task'}
+                </span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Formulários */}
+        {/* Formulários Melhorados */}
         {showTodoForm && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Novo Todo</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Título do Todo"
-                value={todoForm.title}
-                onChange={(e) => setTodoForm({...todoForm, title: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <input
-                type="text"
-                placeholder="Nome do Usuário (opcional)"
-                value={todoForm.user_name}
-                onChange={(e) => setTodoForm({...todoForm, user_name: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+          <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 mb-8 transform transition-all duration-500 animate-in slide-in-from-top-5">
+            <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-2xl flex items-center justify-center">
+                <span className="text-green-600 font-bold text-xl">+</span>
+              </div>
+              Novo Todo
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="group">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Título do Todo *</label>
+                <input
+                  type="text"
+                  placeholder="Digite o título..."
+                  value={todoForm.title}
+                  onChange={(e) => setTodoForm({...todoForm, title: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 bg-white/70 backdrop-blur-sm hover:bg-white/90"
+                />
+              </div>
+              <div className="group">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Usuário</label>
+                <input
+                  type="text"
+                  placeholder="Seu nome (opcional)"
+                  value={todoForm.user_name}
+                  onChange={(e) => setTodoForm({...todoForm, user_name: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 bg-white/70 backdrop-blur-sm hover:bg-white/90"
+                />
+              </div>
             </div>
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={handleCreateTodo}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg mr-3"
+                disabled={!todoForm.title.trim()}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3 rounded-2xl font-medium transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed disabled:transform-none"
               >
                 Criar Todo
               </button>
@@ -188,43 +350,52 @@ const TodosTasksPage = () => {
         )}
 
         {showTaskForm && selectedTodo && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">
-              Nova Task - {selectedTodo.title} (ID: {selectedTodo.id})
+          <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 mb-8 transform transition-all duration-500 animate-in slide-in-from-top-5">
+            <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-2xl flex items-center justify-center">
+                <span className="text-blue-600 font-bold text-xl">+</span>
+              </div>
+              Nova Task para "{selectedTodo.title}"
             </h2>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Título da Task"
-                value={taskForm.title}
-                onChange={(e) => setTaskForm({...taskForm, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <textarea
-                placeholder="Descrição (opcional)"
-                value={taskForm.description}
-                onChange={(e) => setTaskForm({...taskForm, description: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
-              />
-              <div className="flex items-center">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Título da Task *</label>
+                <input
+                  type="text"
+                  placeholder="Digite o título da task..."
+                  value={taskForm.title}
+                  onChange={(e) => setTaskForm({...taskForm, title: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white/70 backdrop-blur-sm hover:bg-white/90"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                <textarea
+                  placeholder="Descreva os detalhes da task (opcional)"
+                  value={taskForm.description}
+                  onChange={(e) => setTaskForm({...taskForm, description: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 bg-white/70 backdrop-blur-sm resize-none hover:bg-white/90"
+                  rows={4}
+                />
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-blue-50/70 rounded-2xl border border-blue-100/50 backdrop-blur-sm">
                 <input
                   type="checkbox"
+                  id="completed"
                   checked={taskForm.is_completed}
                   onChange={(e) => setTaskForm({...taskForm, is_completed: e.target.checked})}
-                  className="mr-2"
+                  className="w-5 h-5 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label className="text-gray-700">Marcar como completada</label>
-              </div>
-              <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
-                Debug: Todo ID selecionado = {selectedTodo.id} | Título = "{taskForm.title}" | Completada = {taskForm.is_completed ? 'Sim' : 'Não'}
+                <label htmlFor="completed" className="text-gray-700 font-medium">
+                  Marcar como completada
+                </label>
               </div>
             </div>
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={handleCreateTask}
                 disabled={!taskForm.title.trim()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg disabled:bg-gray-400"
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-3 rounded-2xl font-medium transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed disabled:transform-none"
               >
                 Criar Task
               </button>
@@ -232,138 +403,213 @@ const TodosTasksPage = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          {/* Lista de Todos */}
+          {/* Lista de Todos Melhorada */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-semibold mb-4">Todos</h2>
+            <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-6 sticky top-6 hover:shadow-3xl transition-all duration-500">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-100 rounded-2xl flex items-center justify-center">
+                  <div className="w-4 h-4 bg-indigo-500 rounded animate-pulse"></div>
+                </div>
+                Todos
+              </h2>
               {todos.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nenhum todo encontrado</p>
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl text-gray-400">📝</span>
+                  </div>
+                  <p className="text-gray-500 font-medium text-lg">Nenhum todo encontrado</p>
+                  <p className="text-gray-400 text-sm mt-1">Clique em "Novo Todo" para começar</p>
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {todos.map((todo) => (
-                    <div
-                      key={todo.id}
-                      className={`p-3 rounded-lg cursor-pointer border transition-colors ${
-                        selectedTodo?.id === todo.id
-                          ? 'bg-blue-50 border-blue-300'
-                          : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                      onClick={() => setSelectedTodo(todo)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900 truncate">{todo.title}</h3>
-                          {todo.user_name && (
-                            <p className="text-sm text-gray-500">{todo.user_name}</p>
-                          )}
-                          <p className="text-xs text-gray-400">{todo.tasks?.length || 0} tasks</p>
+                <div className="space-y-4">
+                  {todos.map((todo) => {
+                    const completedTasks = todo.tasks?.filter(t => t.is_completed).length || 0;
+                    const totalTasks = todo.tasks?.length || 0;
+                    const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+                    
+                    return (
+                      <div
+                        key={todo.id}
+                        className={`group p-5 rounded-2xl cursor-pointer border-2 transition-all duration-500 hover:shadow-xl transform hover:scale-105 ${
+                          selectedTodo?.id === todo.id
+                            ? 'bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border-blue-300 shadow-lg backdrop-blur-sm'
+                            : 'border-gray-200/50 hover:border-gray-300/70 bg-white/70 hover:bg-white/90 backdrop-blur-sm'
+                        }`}
+                        onClick={() => setSelectedTodo(todo)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors duration-300 text-lg">
+                              {todo.title}
+                            </h3>
+                            {todo.user_name && (
+                              <p className="text-sm text-gray-600 mt-1 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                {todo.user_name}
+                              </p>
+                            )}
+                            <div className="mt-3 space-y-2">
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>{completedTasks}/{totalTasks} concluídas</span>
+                                <span className="font-medium">{Math.round(progress)}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                                  style={{width: `${progress}%`}}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTodo(todo.id!);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-all duration-300"
+                            title="Deletar todo"
+                          >
+                            <span className="text-lg">×</span>
+                          </button>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTodo(todo.id!);
-                          }}
-                          className="text-red-500 hover:text-red-700 p-1"
-                          title="Deletar todo"
-                        >
-                          ×
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Tasks do Todo Selecionado */}
+          {/* Tasks do Todo Selecionado Melhoradas */}
           <div className="lg:col-span-3">
             {!selectedTodo ? (
-              <div className="bg-white rounded-lg shadow p-12 text-center">
-                <h3 className="text-xl font-medium text-gray-900 mb-2">Selecione um Todo</h3>
-                <p className="text-gray-600">Clique em um todo à esquerda para ver suas tasks</p>
+              <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-20 text-center hover:shadow-3xl transition-all duration-500">
+                <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-8">
+                  <span className="text-6xl">🎯</span>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-800 mb-4">Selecione um Todo</h3>
+                <p className="text-gray-600 text-xl">Clique em um todo à esquerda para ver suas tasks</p>
               </div>
             ) : (
-              <div>
-                <div className="bg-white rounded-lg shadow p-6 mb-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">{selectedTodo.title}</h2>
+              <div className="space-y-8">
+                {/* Header do Todo Selecionado */}
+                <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 hover:shadow-3xl transition-all duration-500">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div className="flex-1">
+                      <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        {selectedTodo.title}
+                      </h2>
                       {selectedTodo.user_name && (
-                        <p className="text-gray-600">Por: {selectedTodo.user_name}</p>
+                        <p className="text-gray-600 mt-3 flex items-center gap-2 text-lg">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                          Criado por: <span className="font-medium">{selectedTodo.user_name}</span>
+                        </p>
                       )}
-                      <p className="text-sm text-gray-500 mt-1">
-                        {selectedTodo.tasks?.length || 0} tasks • 
-                        {selectedTodo.tasks?.filter(t => t.is_completed).length || 0} completadas
-                      </p>
+                      
+                      {/* Estatísticas */}
+                      <div className="flex flex-wrap items-center gap-4 mt-6">
+                        <div className="flex items-center gap-2 px-5 py-3 bg-blue-100/80 rounded-full backdrop-blur-sm">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                          <span className="text-blue-700 font-medium">
+                            {selectedTodo.tasks?.length || 0} tasks total
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 px-5 py-3 bg-green-100/80 rounded-full backdrop-blur-sm">
+                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-green-700 font-medium">
+                            {selectedTodo.tasks?.filter(t => t.is_completed).length || 0} concluídas
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 px-5 py-3 bg-orange-100/80 rounded-full backdrop-blur-sm">
+                          <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                          <span className="text-orange-700 font-medium">
+                            {selectedTodo.tasks?.filter(t => !t.is_completed).length || 0} pendentes
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Lista de Tasks */}
                 {!selectedTodo.tasks || selectedTodo.tasks.length === 0 ? (
-                  <div className="bg-white rounded-lg shadow p-12 text-center">
-                    <h3 className="text-xl font-medium text-gray-900 mb-2">Nenhuma task encontrada</h3>
-                    <p className="text-gray-600">Clique em "+ Task" para criar a primeira task</p>
+                  <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-20 text-center hover:shadow-3xl transition-all duration-500">
+                    <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-8">
+                      <span className="text-6xl">📋</span>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-800 mb-4">Nenhuma task encontrada</h3>
+                    <p className="text-gray-600 text-xl mb-8">Clique em "Nova Task" para criar a primeira task</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {selectedTodo.tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`bg-white rounded-lg shadow p-6 border-l-4 ${
-                          task.is_completed ? 'border-green-500' : 'border-blue-500'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className={`text-lg font-semibold ${
-                                task.is_completed ? 'text-gray-500 line-through' : 'text-gray-900'
-                              }`}>
-                                {task.title}
-                              </h3>
-                              <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                                task.is_completed 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-blue-100 text-blue-800'
-                              }`}>
-                                {task.is_completed ? 'Completada' : 'Pendente'}
-                              </span>
-                            </div>
-                            
-                            {task.description && (
-                              <p className={`text-gray-600 mb-3 ${
-                                task.is_completed ? 'line-through' : ''
-                              }`}>
-                                {task.description}
-                              </p>
-                            )}
-                          </div>
+                  <div className="space-y-6">
+                    {selectedTodo.tasks.map((task) => {
+                      const isCompleted = task.is_completed === true || task.is_completed === 1;
+                      
+                      return (
+                        <div
+                          key={task.id}
+                          className={`group bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border-l-6 transition-all duration-500 hover:shadow-3xl transform hover:scale-[1.02] ${
+                            isCompleted 
+                              ? 'border-green-500 bg-gradient-to-r from-green-50/70 to-emerald-50/70' 
+                              : 'border-blue-500 bg-gradient-to-r from-blue-50/70 to-indigo-50/70'
+                          }`}
+                        >
+                          <div className="p-8">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-4 mb-4">
+                                  <h3 className={`text-2xl font-bold transition-all duration-300 ${
+                                    isCompleted 
+                                      ? 'text-green-700 line-through' 
+                                      : 'text-gray-900 group-hover:text-blue-600'
+                                  }`}>
+                                    {task.title}
+                                  </h3>
+                                  
+                                  <div className={`px-4 py-2 text-xs rounded-full font-bold uppercase tracking-wide transition-all duration-300 ${
+                                    isCompleted 
+                                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg' 
+                                      : 'bg-gradient-to-r from-orange-400 to-yellow-500 text-white shadow-lg'
+                                  }`}>
+                                    {isCompleted ? '✓ Concluída' : '⏳ Pendente'}
+                                  </div>
+                                </div>
+                                
+                                {task.description && (
+                                  <p className={`text-gray-600 text-lg leading-relaxed transition-all duration-300 ${
+                                    isCompleted ? 'line-through opacity-75' : ''
+                                  }`}>
+                                    {task.description}
+                                  </p>
+                                )}
+                              </div>
 
-                          <div className="flex items-center space-x-2 ml-4">
-                            {!task.is_completed && (
-                              <button
-                                onClick={() => handleCompleteTask(task.id!)}
-                                className="bg-green-100 hover:bg-green-200 text-green-700 p-2 rounded-lg transition-colors"
-                                title="Completar task"
-                              >
-                                ✓
-                              </button>
-                            )}
-                            
-                            <button
-                              onClick={() => handleDeleteTask(task.id!)}
-                              className="bg-red-100 hover:bg-red-200 text-red-700 p-2 rounded-lg transition-colors"
-                              title="Deletar task"
-                            >
-                              ×
-                            </button>
+                              <div className="flex items-center gap-4 ml-6">
+                                {!isCompleted && (
+                                  <button
+                                    onClick={() => handleCompleteTask(task.id!)}
+                                    className="group/btn bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white p-4 rounded-2xl transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:scale-110"
+                                    title="Marcar como concluída"
+                                  >
+                                    <span className="text-lg font-bold">✓</span>
+                                  </button>
+                                )}
+                                
+                                <button
+                                  onClick={() => handleDeleteTask(task.id!)}
+                                  className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white p-4 rounded-2xl transition-all duration-500 shadow-xl hover:shadow-2xl transform hover:scale-110"
+                                  title="Deletar task"
+                                >
+                                  <span className="text-lg font-bold">×</span>
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -48,7 +48,7 @@ class TaskController extends Controller
         $task->update($data);
 
         // se antes não estava concluída e agora foi concluída → recompensa o usuário
-        if (!$wasCompleted && $task->is_completed) {
+        if (!$wasCompleted && $task->is_completed && $task->todo?->user_id) {
             $this->rewardUser($task->todo->user_id);
         }
 
