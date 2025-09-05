@@ -11,7 +11,7 @@ class Todo extends Model
     protected $fillable = ['title', 'user_name'];
 
     /**
-     * Salva no Postgres (padrão) e replica em MySQL + SQLite
+     * Salva no Postgres (padrão) e reaplica em MySQL + SQLite
      */
     public function saveWithReplication(array $options = [])
     {

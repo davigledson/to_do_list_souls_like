@@ -3,35 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ToDo Front</title>
+  <title>ToDo CRUD App</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="container">
-    <h1>📝 ToDo Frontend</h1>
+    <div class="header">
+      <h1>📝 ToDo CRUD App</h1>
+      <div id="status-text" class="status-text">Inicializando aplicação...</div>
+    </div>
     
     <div class="sections-grid">
-      <section class="fade-in">
-        <h2>🔍 Teste da rota</h2>
-        <div id="teste-text">Carregando...</div>
-      </section>
-
-      <section class="fade-in">
+      <!-- Efeito 3D na seção principal -->
+      <section class="section fade-in" data-tilt>
         <h2>👥 Users</h2>
+        <div class="actions">
+          <button class="btn" onclick="app.loadUsers()">🔄 Recarregar</button>
+        </div>
         <ul id="users-list">
           <li class="loading">Carregando...</li>
         </ul>
       </section>
 
-      <section class="fade-in">
+      <!-- Efeito 3D na seção principal -->
+      <section class="section fade-in" data-tilt>
         <h2>📋 Todos</h2>
+        <div class="actions">
+          <button class="btn" onclick="app.loadTodos()">🔄 Recarregar</button>
+          <button class="btn success" onclick="app.showTodoModal()">➕ Novo Todo</button>
+        </div>
         <ul id="todos-list">
           <li class="loading">Carregando...</li>
         </ul>
       </section>
 
-      <section class="fade-in">
+      <!-- Efeito 3D na seção principal -->
+      <section class="section fade-in" data-tilt>
         <h2>✅ Tasks</h2>
+        <div class="actions">
+          <button class="btn" onclick="app.loadTasks()">🔄 Recarregar</button>
+          <button class="btn success" onclick="app.showTaskModal()">➕ Nova Task</button>
+        </div>
         <ul id="tasks-list">
           <li class="loading">Carregando...</li>
         </ul>
@@ -39,29 +51,482 @@
     </div>
   </div>
 
-  <script type="module">
-    // Simulação dos dados que você tem
-    setTimeout(() => {
-      // Simula o carregamento dos dados
-      document.getElementById('teste-text').textContent = 'Conexão estabelecida com sucesso!';
-      
-      const usersList = document.getElementById('users-list');
-      usersList.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const li = document.createElement('li');
-        li.textContent = `${i} - Novo Usuário`;
-        usersList.appendChild(li);
-      }
-      
-      const todosList = document.getElementById('todos-list');
-      todosList.innerHTML = '<li>Nenhum item</li>';
-      
-      const tasksList = document.getElementById('tasks-list');
-      tasksList.innerHTML = '<li>Nenhum item</li>';
-    }, 1500);
+  <!-- Modal para Todo -->
+  <div id="todoModal" class="modal">
+    <!-- Adicionado data-tilt para o efeito 3D no modal -->
+    <div class="modal-content" data-tilt>
+      <div class="modal-header">
+        <h3 id="todoModalTitle">Novo Todo</h3>
+        <span class="close" onclick="app.closeTodoModal()">&times;</span>
+      </div>
+      <form id="todoForm">
+        <div class="form-group">
+          <label for="todoTitle">Título *</label>
+          <input type="text" id="todoTitle" name="title" required>
+        </div>
+        <div class="form-group">
+          <label for="todoUserName">Nome do Usuário</label>
+          <input type="text" id="todoUserName" name="user_name">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="app.closeTodoModal()">Cancelar</button>
+          <button type="submit" class="btn success">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    // import { initFront } from './js/render.js';
-    // initFront();
+  <!-- Modal para Task -->
+  <div id="taskModal" class="modal">
+    <!-- Adicionado data-tilt para o efeito 3D no modal -->
+    <div class="modal-content" data-tilt>
+      <div class="modal-header">
+        <h3 id="taskModalTitle">Nova Task</h3>
+        <span class="close" onclick="app.closeTaskModal()">&times;</span>
+      </div>
+      <form id="taskForm">
+        <div class="form-group">
+          <label for="taskTitle">Título *</label>
+          <input type="text" id="taskTitle" name="title" required>
+        </div>
+        <div class="form-group">
+          <label for="taskDescription">Descrição</label>
+          <textarea id="taskDescription" name="description"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="taskTodoId">Todo *</label>
+          <select id="taskTodoId" name="todo_id" required>
+            <option value="">Selecione um Todo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="taskCompleted" name="is_completed">
+            <label for="taskCompleted">Marcar como completa</label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="app.closeTaskModal()">Cancelar</button>
+          <button type="submit" class="btn success">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    // Importar os serviços reais
+    import TodoService from './services/TodoService.js';
+    import TaskService from './services/TaskService.js';
+
+    class App {
+      constructor() {
+        this.todos = [];
+        this.tasks = [];
+        this.users = [];
+        this.currentTodoId = null;
+        this.currentTaskId = null;
+      }
+
+      // Inicializar aplicação
+      async init() {
+        this.updateStatus('Conectando com a API...', 'loading');
+        
+        try {
+          await Promise.all([
+            this.loadUsers(),
+            this.loadTodos(), 
+            this.loadTasks()
+          ]);
+          
+          this.updateStatus('✅ Aplicação carregada com sucesso!', 'success');
+          this.setupEventListeners();
+          
+          // Inicializa o Tilt.js para todos os elementos que já existem na página
+          VanillaTilt.init(document.querySelectorAll("[data-tilt]"));
+
+        } catch (error) {
+          console.error('Erro ao inicializar:', error);
+          this.updateStatus('❌ Erro ao conectar com a API', 'error');
+        }
+      }
+
+      setupEventListeners() {
+        // Event listeners para formulários
+        document.getElementById('todoForm').addEventListener('submit', (e) => this.handleTodoSubmit(e));
+        document.getElementById('taskForm').addEventListener('submit', (e) => this.handleTaskSubmit(e));
+
+        // Fechar modais ao clicar fora
+        window.addEventListener('click', (e) => {
+          if (e.target.classList.contains('modal')) {
+            this.closeTodoModal();
+            this.closeTaskModal();
+          }
+        });
+      }
+
+      // Atualiza o status na interface
+      updateStatus(message, type = 'info') {
+        const statusEl = document.getElementById('status-text');
+        if (statusEl) {
+          statusEl.textContent = message;
+          statusEl.className = `status-text ${type}`;
+        }
+      }
+
+      // Formata data
+      formatDate(dateString) {
+        try {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        } catch (error) {
+          return dateString;
+        }
+      }
+
+      // === USERS ===
+      async loadUsers() {
+        try {
+          const simulatedUsers = [
+            { id: 1, name: 'João Silva', email: 'joao@email.com' },
+            { id: 2, name: 'Maria Santos', email: 'maria@email.com' },
+            { id: 3, name: 'Pedro Oliveira', email: 'pedro@email.com' },
+            { id: 4, name: 'Ana Costa', email: 'ana@email.com' }
+          ];
+          
+          this.users = simulatedUsers;
+          this.renderUsers();
+        } catch (error) {
+          console.error('Erro ao carregar usuários:', error);
+          this.renderError('users-list', 'Erro ao carregar usuários');
+        }
+      }
+
+      renderUsers() {
+        const ul = document.getElementById('users-list');
+        ul.innerHTML = '';
+        
+        if (!this.users || this.users.length === 0) {
+          ul.innerHTML = '<li class="empty">Nenhum usuário encontrado</li>';
+          return;
+        }
+
+        this.users.forEach(user => {
+          const li = document.createElement('li');
+          // Adicionado data-tilt aos itens da lista de usuários
+          li.setAttribute('data-tilt', '');
+          li.innerHTML = `
+            <div class="item-content">
+              <div class="item-header">
+                <strong>${user.id}</strong> - ${user.name}
+              </div>
+              ${user.email ? `<div class="item-meta">📧 ${user.email}</div>` : ''}
+            </div>
+          `;
+          ul.appendChild(li);
+        });
+        
+        // Re-inicializa o Tilt para os novos elementos
+        VanillaTilt.init(ul.querySelectorAll("[data-tilt]"));
+      }
+
+      // === TODOS ===
+      async loadTodos() {
+        try {
+          this.todos = await TodoService.listarTodos();
+          this.renderTodos();
+          this.updateTodoSelect();
+        } catch (error) {
+          console.error('Erro ao carregar todos:', error);
+          this.renderError('todos-list', 'Erro ao carregar todos');
+        }
+      }
+
+      renderTodos() {
+        const ul = document.getElementById('todos-list');
+        ul.innerHTML = '';
+        
+        if (!this.todos || this.todos.length === 0) {
+          ul.innerHTML = '<li class="empty">Nenhum todo encontrado</li>';
+          return;
+        }
+
+        this.todos.forEach(todo => {
+          const taskCount = this.tasks.filter(task => task.todo_id === todo.id).length;
+          const li = document.createElement('li');
+          // Adicionado data-tilt aos itens da lista de todos
+          li.setAttribute('data-tilt', '');
+          li.innerHTML = `
+            <div class="item-content">
+              <div class="item-header">
+                <span><strong>${todo.id}</strong> - ${todo.title}</span>
+                ${taskCount > 0 ? `<span class="badge">${taskCount} tasks</span>` : ''}
+              </div>
+              ${todo.user_name ? `<div class="item-meta">👤 ${todo.user_name}</div>` : ''}
+              ${todo.created_at ? `<div class="item-meta">📅 ${this.formatDate(todo.created_at)}</div>` : ''}
+              <div class="item-actions">
+                <button class="btn" onclick="app.editTodo(${todo.id})">✏️ Editar</button>
+                <button class="btn danger" onclick="app.deleteTodo(${todo.id})">🗑️ Deletar</button>
+              </div>
+            </div>
+          `;
+          ul.appendChild(li);
+        });
+
+        // Re-inicializa o Tilt para os novos elementos
+        VanillaTilt.init(ul.querySelectorAll("[data-tilt]"));
+      }
+
+      updateTodoSelect() {
+        const select = document.getElementById('taskTodoId');
+        select.innerHTML = '<option value="">Selecione um Todo</option>';
+        
+        this.todos.forEach(todo => {
+          const option = document.createElement('option');
+          option.value = todo.id;
+          option.textContent = `${todo.id} - ${todo.title}`;
+          select.appendChild(option);
+        });
+      }
+
+      showTodoModal(todo = null) {
+        const modal = document.getElementById('todoModal');
+        const title = document.getElementById('todoModalTitle');
+        const form = document.getElementById('todoForm');
+        
+        if (todo) {
+          title.textContent = 'Editar Todo';
+          document.getElementById('todoTitle').value = todo.title || '';
+          document.getElementById('todoUserName').value = todo.user_name || '';
+          this.currentTodoId = todo.id;
+        } else {
+          title.textContent = 'Novo Todo';
+          form.reset();
+          this.currentTodoId = null;
+        }
+        
+        modal.classList.add('show');
+        document.getElementById('todoTitle').focus();
+      }
+
+      closeTodoModal() {
+        const modal = document.getElementById('todoModal');
+        modal.classList.remove('show');
+        this.currentTodoId = null;
+      }
+
+      async handleTodoSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const todoData = {
+          title: formData.get('title').trim(),
+          user_name: formData.get('user_name').trim() || null
+        };
+
+        if (!todoData.title) { alert('Título é obrigatório!'); return; }
+
+        try {
+          this.updateStatus(this.currentTodoId ? 'Atualizando todo...' : 'Criando todo...', 'loading');
+          if (this.currentTodoId) {
+            await TodoService.atualizar(this.currentTodoId, todoData);
+          } else {
+            await TodoService.criar(todoData);
+          }
+          await this.loadTodos();
+          this.closeTodoModal();
+          this.updateStatus(this.currentTodoId ? '✅ Todo atualizado!' : '✅ Todo criado!', 'success');
+        } catch (error) {
+          console.error('Erro ao salvar todo:', error);
+          this.updateStatus('❌ Erro ao salvar todo', 'error');
+        }
+      }
+
+      editTodo(id) {
+        const todo = this.todos.find(t => t.id === id);
+        if (todo) this.showTodoModal(todo);
+      }
+
+      async deleteTodo(id) {
+        if (!confirm('Tem certeza que deseja deletar este todo? Todas as tasks relacionadas também serão removidas.')) return;
+        
+        try {
+          this.updateStatus('Deletando todo...', 'loading');
+          await TodoService.deletar(id);
+          await this.loadTodos();
+          await this.loadTasks();
+          this.updateStatus('✅ Todo deletado com sucesso!', 'success');
+        } catch (error) {
+          console.error('Erro ao deletar todo:', error);
+          this.updateStatus('❌ Erro ao deletar todo', 'error');
+        }
+      }
+
+      // === TASKS ===
+      async loadTasks() {
+        try {
+          this.tasks = await TaskService.listarTodas();
+          this.renderTasks();
+        } catch (error) {
+          console.error('Erro ao carregar tasks:', error);
+          this.renderError('tasks-list', 'Erro ao carregar tasks');
+        }
+      }
+
+      renderTasks() {
+        const ul = document.getElementById('tasks-list');
+        ul.innerHTML = '';
+        
+        if (!this.tasks || this.tasks.length === 0) {
+          ul.innerHTML = '<li class="empty">Nenhuma task encontrada</li>';
+          return;
+        }
+
+        this.tasks.forEach(task => {
+          const todo = this.todos.find(t => t.id === task.todo_id);
+          const li = document.createElement('li');
+          // Adicionado data-tilt aos itens da lista de tasks
+          li.setAttribute('data-tilt', '');
+          li.className = task.is_completed ? 'completed' : '';
+          li.innerHTML = `
+            <div class="item-content">
+              <div class="item-header">
+                <span><strong>${task.id}</strong> - ${task.title}</span>
+                ${task.is_completed ? '<span class="status-badge completed">✅ Completa</span>' : '<span class="status-badge pending">⏳ Pendente</span>'}
+              </div>
+              ${task.description ? `<div class="item-description">${task.description}</div>` : ''}
+              <div class="item-meta">📋 Todo: ${todo ? todo.title : `ID ${task.todo_id}`}</div>
+              ${task.created_at ? `<div class="item-meta">📅 ${this.formatDate(task.created_at)}</div>` : ''}
+              <div class="item-actions">
+                <button class="btn ${task.is_completed ? 'secondary' : 'success'}" 
+                        onclick="app.toggleTask(${task.id}, ${!task.is_completed})">
+                  ${task.is_completed ? '↩️ Desmarcar' : '✅ Completar'}
+                </button>
+                <button class="btn" onclick="app.editTask(${task.id})">✏️ Editar</button>
+                <button class="btn danger" onclick="app.deleteTask(${task.id})">🗑️ Deletar</button>
+              </div>
+            </div>
+          `;
+          ul.appendChild(li);
+        });
+
+        // Re-inicializa o Tilt para os novos elementos
+        VanillaTilt.init(ul.querySelectorAll("[data-tilt]"));
+      }
+
+      showTaskModal(task = null) {
+        const modal = document.getElementById('taskModal');
+        const title = document.getElementById('taskModalTitle');
+        const form = document.getElementById('taskForm');
+        
+        if (task) {
+          title.textContent = 'Editar Task';
+          document.getElementById('taskTitle').value = task.title || '';
+          document.getElementById('taskDescription').value = task.description || '';
+          document.getElementById('taskTodoId').value = task.todo_id || '';
+          document.getElementById('taskCompleted').checked = task.is_completed || false;
+          this.currentTaskId = task.id;
+        } else {
+          title.textContent = 'Nova Task';
+          form.reset();
+          this.currentTaskId = null;
+        }
+        
+        modal.classList.add('show');
+        document.getElementById('taskTitle').focus();
+      }
+
+      closeTaskModal() {
+        const modal = document.getElementById('taskModal');
+        modal.classList.remove('show');
+        this.currentTaskId = null;
+      }
+
+      async handleTaskSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const taskData = {
+          title: formData.get('title').trim(),
+          description: formData.get('description').trim() || null,
+          todo_id: parseInt(formData.get('todo_id')),
+          is_completed: formData.has('is_completed')
+        };
+
+        if (!taskData.title) { alert('Título é obrigatório!'); return; }
+        if (!taskData.todo_id) { alert('Selecione um Todo!'); return; }
+
+        try {
+          this.updateStatus(this.currentTaskId ? 'Atualizando task...' : 'Criando task...', 'loading');
+          if (this.currentTaskId) {
+            await TaskService.atualizar(this.currentTaskId, taskData);
+          } else {
+            await TaskService.criar(taskData);
+          }
+          await this.loadTasks();
+          this.closeTaskModal();
+          this.updateStatus(this.currentTaskId ? '✅ Task atualizada!' : '✅ Task criada!', 'success');
+        } catch (error) {
+          console.error('Erro ao salvar task:', error);
+          this.updateStatus('❌ Erro ao salvar task', 'error');
+        }
+      }
+
+      editTask(id) {
+        const task = this.tasks.find(t => t.id === id);
+        if (task) this.showTaskModal(task);
+      }
+
+      async toggleTask(id, isCompleted) {
+        try {
+          this.updateStatus(`${isCompleted ? 'Completando' : 'Desmarcando'} task...`, 'loading');
+          if (isCompleted) {
+            await TaskService.completar(id);
+          } else {
+            await TaskService.descompletar(id);
+          }
+          await this.loadTasks();
+          this.updateStatus(`✅ Task ${isCompleted ? 'completada' : 'desmarcada'}!`, 'success');
+        } catch (error) {
+          console.error('Erro ao alterar status da task:', error);
+          this.updateStatus('❌ Erro ao alterar status da task', 'error');
+        }
+      }
+
+      async deleteTask(id) {
+        if (!confirm('Tem certeza que deseja deletar esta task?')) return;
+        
+        try {
+          this.updateStatus('Deletando task...', 'loading');
+          await TaskService.deletar(id);
+          await this.loadTasks();
+          this.updateStatus('✅ Task deletada com sucesso!', 'success');
+        } catch (error) {
+          console.error('Erro ao deletar task:', error);
+          this.updateStatus('❌ Erro ao deletar task', 'error');
+        }
+      }
+
+      // === UTILITY METHODS ===
+      renderError(listId, message) {
+        const ul = document.getElementById(listId);
+        ul.innerHTML = `<li class="error">${message}</li>`;
+      }
+    }
+
+    // Criar instância global da aplicação
+    window.app = new App();
+    
+    // Inicializar quando a página carregar
+    document.addEventListener('DOMContentLoaded', () => {
+      window.app.init();
+    });
   </script>
+
+  <!-- SCRIPT DA BIBLIOTECA TILT.JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
 </body>
 </html>
