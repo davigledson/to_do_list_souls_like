@@ -17,7 +17,7 @@ class TodoSeeder extends Seeder
 
         foreach ($todos as $todoData) {
             $todo = new Todo($todoData);
-            $todo->saveWithReplication(); // salva no pgsql + replica
+           // $todo->saveWithReplication(); // salva no pgsql + replica
         }
     }
 }

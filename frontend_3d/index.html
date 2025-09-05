@@ -14,30 +14,20 @@
     </div>
     
     <div class="sections-grid">
-      <!-- Efeito 3D na seção principal -->
-      <section class="section fade-in" data-tilt>
-        <h2>👥 Users</h2>
-        <div class="actions">
-          <button class="btn" onclick="app.loadUsers()">🔄 Recarregar</button>
-        </div>
-        <ul id="users-list">
-          <li class="loading">Carregando...</li>
-        </ul>
-      </section>
-
-      <!-- Efeito 3D na seção principal -->
+      <!-- Seção de Todos com botão para XML -->
       <section class="section fade-in" data-tilt>
         <h2>📋 Todos</h2>
         <div class="actions">
           <button class="btn" onclick="app.loadTodos()">🔄 Recarregar</button>
           <button class="btn success" onclick="app.showTodoModal()">➕ Novo Todo</button>
+          <button class="btn info" onclick="app.loadTodosAsXml()">📄 Ver XML</button>
         </div>
         <ul id="todos-list">
           <li class="loading">Carregando...</li>
         </ul>
       </section>
 
-      <!-- Efeito 3D na seção principal -->
+      <!-- Seção de Tasks -->
       <section class="section fade-in" data-tilt>
         <h2>✅ Tasks</h2>
         <div class="actions">
@@ -51,9 +41,8 @@
     </div>
   </div>
 
-  <!-- Modal para Todo -->
+  <!-- Modal para Criar/Editar Todo -->
   <div id="todoModal" class="modal">
-    <!-- Adicionado data-tilt para o efeito 3D no modal -->
     <div class="modal-content" data-tilt>
       <div class="modal-header">
         <h3 id="todoModalTitle">Novo Todo</h3>
@@ -76,9 +65,8 @@
     </div>
   </div>
 
-  <!-- Modal para Task -->
+  <!-- Modal para Criar/Editar Task -->
   <div id="taskModal" class="modal">
-    <!-- Adicionado data-tilt para o efeito 3D no modal -->
     <div class="modal-content" data-tilt>
       <div class="modal-header">
         <h3 id="taskModalTitle">Nova Task</h3>
@@ -113,6 +101,22 @@
     </div>
   </div>
 
+  <!-- Modal para Visualizar XML -->
+  <div id="xmlModal" class="modal">
+    <div class="modal-content" data-tilt>
+      <div class="modal-header">
+        <h3>📄 Visualizador de XML</h3>
+        <span class="close" onclick="app.closeXmlModal()">&times;</span>
+      </div>
+      <div class="xml-viewer">
+        <pre><code id="xmlContent"></code></pre>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn secondary" onclick="app.closeXmlModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     // Importar os serviços reais
     import TodoService from './services/TodoService.js';
@@ -122,7 +126,6 @@
       constructor() {
         this.todos = [];
         this.tasks = [];
-        this.users = [];
         this.currentTodoId = null;
         this.currentTaskId = null;
       }
@@ -133,7 +136,6 @@
         
         try {
           await Promise.all([
-            this.loadUsers(),
             this.loadTodos(), 
             this.loadTasks()
           ]);
@@ -160,6 +162,7 @@
           if (e.target.classList.contains('modal')) {
             this.closeTodoModal();
             this.closeTaskModal();
+            this.closeXmlModal(); // Adicionado para fechar o modal XML também
           }
         });
       }
@@ -178,63 +181,14 @@
         try {
           const date = new Date(dateString);
           return date.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
           });
         } catch (error) {
           return dateString;
         }
       }
-
-      // === USERS ===
-      async loadUsers() {
-        try {
-          const simulatedUsers = [
-            { id: 1, name: 'João Silva', email: 'joao@email.com' },
-            { id: 2, name: 'Maria Santos', email: 'maria@email.com' },
-            { id: 3, name: 'Pedro Oliveira', email: 'pedro@email.com' },
-            { id: 4, name: 'Ana Costa', email: 'ana@email.com' }
-          ];
-          
-          this.users = simulatedUsers;
-          this.renderUsers();
-        } catch (error) {
-          console.error('Erro ao carregar usuários:', error);
-          this.renderError('users-list', 'Erro ao carregar usuários');
-        }
-      }
-
-      renderUsers() {
-        const ul = document.getElementById('users-list');
-        ul.innerHTML = '';
-        
-        if (!this.users || this.users.length === 0) {
-          ul.innerHTML = '<li class="empty">Nenhum usuário encontrado</li>';
-          return;
-        }
-
-        this.users.forEach(user => {
-          const li = document.createElement('li');
-          // Adicionado data-tilt aos itens da lista de usuários
-          li.setAttribute('data-tilt', '');
-          li.innerHTML = `
-            <div class="item-content">
-              <div class="item-header">
-                <strong>${user.id}</strong> - ${user.name}
-              </div>
-              ${user.email ? `<div class="item-meta">📧 ${user.email}</div>` : ''}
-            </div>
-          `;
-          ul.appendChild(li);
-        });
-        
-        // Re-inicializa o Tilt para os novos elementos
-        VanillaTilt.init(ul.querySelectorAll("[data-tilt]"));
-      }
-
+     
       // === TODOS ===
       async loadTodos() {
         try {
@@ -259,7 +213,6 @@
         this.todos.forEach(todo => {
           const taskCount = this.tasks.filter(task => task.todo_id === todo.id).length;
           const li = document.createElement('li');
-          // Adicionado data-tilt aos itens da lista de todos
           li.setAttribute('data-tilt', '');
           li.innerHTML = `
             <div class="item-content">
@@ -270,6 +223,7 @@
               ${todo.user_name ? `<div class="item-meta">👤 ${todo.user_name}</div>` : ''}
               ${todo.created_at ? `<div class="item-meta">📅 ${this.formatDate(todo.created_at)}</div>` : ''}
               <div class="item-actions">
+                <button class="btn info" onclick="app.loadSingleTodoAsXml(${todo.id})">XML</button>
                 <button class="btn" onclick="app.editTodo(${todo.id})">✏️ Editar</button>
                 <button class="btn danger" onclick="app.deleteTodo(${todo.id})">🗑️ Deletar</button>
               </div>
@@ -301,8 +255,8 @@
         
         if (todo) {
           title.textContent = 'Editar Todo';
-          document.getElementById('todoTitle').value = todo.title || '';
-          document.getElementById('todoUserName').value = todo.user_name || '';
+          form.querySelector('#todoTitle').value = todo.title || '';
+          form.querySelector('#todoUserName').value = todo.user_name || '';
           this.currentTodoId = todo.id;
         } else {
           title.textContent = 'Novo Todo';
@@ -315,8 +269,7 @@
       }
 
       closeTodoModal() {
-        const modal = document.getElementById('todoModal');
-        modal.classList.remove('show');
+        document.getElementById('todoModal').classList.remove('show');
         this.currentTodoId = null;
       }
 
@@ -358,7 +311,7 @@
           this.updateStatus('Deletando todo...', 'loading');
           await TodoService.deletar(id);
           await this.loadTodos();
-          await this.loadTasks();
+          await this.loadTasks(); // Recarrega as tasks também
           this.updateStatus('✅ Todo deletado com sucesso!', 'success');
         } catch (error) {
           console.error('Erro ao deletar todo:', error);
@@ -389,7 +342,6 @@
         this.tasks.forEach(task => {
           const todo = this.todos.find(t => t.id === task.todo_id);
           const li = document.createElement('li');
-          // Adicionado data-tilt aos itens da lista de tasks
           li.setAttribute('data-tilt', '');
           li.className = task.is_completed ? 'completed' : '';
           li.innerHTML = `
@@ -414,7 +366,6 @@
           ul.appendChild(li);
         });
 
-        // Re-inicializa o Tilt para os novos elementos
         VanillaTilt.init(ul.querySelectorAll("[data-tilt]"));
       }
 
@@ -425,10 +376,10 @@
         
         if (task) {
           title.textContent = 'Editar Task';
-          document.getElementById('taskTitle').value = task.title || '';
-          document.getElementById('taskDescription').value = task.description || '';
-          document.getElementById('taskTodoId').value = task.todo_id || '';
-          document.getElementById('taskCompleted').checked = task.is_completed || false;
+          form.querySelector('#taskTitle').value = task.title || '';
+          form.querySelector('#taskDescription').value = task.description || '';
+          form.querySelector('#taskTodoId').value = task.todo_id || '';
+          form.querySelector('#taskCompleted').checked = task.is_completed || false;
           this.currentTaskId = task.id;
         } else {
           title.textContent = 'Nova Task';
@@ -441,8 +392,7 @@
       }
 
       closeTaskModal() {
-        const modal = document.getElementById('taskModal');
-        modal.classList.remove('show');
+        document.getElementById('taskModal').classList.remove('show');
         this.currentTaskId = null;
       }
 
@@ -507,6 +457,42 @@
         } catch (error) {
           console.error('Erro ao deletar task:', error);
           this.updateStatus('❌ Erro ao deletar task', 'error');
+        }
+      }
+
+      // === MÉTODOS PARA XML ===
+      showXmlModal(xmlContent) {
+        const modal = document.getElementById('xmlModal');
+        const contentEl = document.getElementById('xmlContent');
+        contentEl.textContent = xmlContent;
+        modal.classList.add('show');
+      }
+
+      closeXmlModal() {
+        document.getElementById('xmlModal').classList.remove('show');
+      }
+
+      async loadTodosAsXml() {
+        this.updateStatus('Buscando dados XML...', 'loading');
+        try {
+          const xmlData = await TodoService.listarTodosXml();
+          this.showXmlModal(xmlData);
+          this.updateStatus('✅ XML carregado com sucesso!', 'success');
+        } catch (error) {
+          console.error('Erro ao carregar XML de todos:', error);
+          this.updateStatus('❌ Erro ao carregar XML', 'error');
+        }
+      }
+
+      async loadSingleTodoAsXml(id) {
+        this.updateStatus(`Buscando XML para o Todo #${id}...`, 'loading');
+        try {
+          const xmlData = await TodoService.obterTodoXml(id);
+          this.showXmlModal(xmlData);
+          this.updateStatus(`✅ XML do Todo #${id} carregado!`, 'success');
+        } catch (error) {
+          console.error(`Erro ao carregar XML do todo ${id}:`, error);
+          this.updateStatus('❌ Erro ao carregar XML', 'error');
         }
       }
 

@@ -419,3 +419,35 @@
 .modal.show .modal-content {
   animation: zoomIn 0.3s ease-out forwards;
 }
+/* --- Estilos para o Visualizador de XML --- */
+
+.xml-viewer {
+  background-color: #2d2d2d; /* Fundo escuro para o código */
+  color: #f1f1f1;
+  border-radius: 8px;
+  padding: 15px;
+  max-height: 60vh; /* Altura máxima, com barra de rolagem se necessário */
+  overflow: auto;
+  border: 1px solid #444;
+}
+
+.xml-viewer pre {
+  margin: 0;
+  white-space: pre-wrap; /* Quebra de linha no código */
+  word-wrap: break-word;
+}
+
+.xml-viewer code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+/* Adiciona um estilo para o botão de informação */
+.btn.info {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn.info:hover {
+  background-color: #0056b3;
+}

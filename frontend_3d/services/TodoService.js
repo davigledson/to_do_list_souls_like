@@ -2,12 +2,9 @@
 import BaseService from './BaseService.js';
 
 class TodoService extends BaseService {
-  static fetchInstance = this.createFetchInstance('todos');
+ static fetchInstance = this.createFetchInstance('/api/v1/todos');
+  static xmlFetchInstance = this.createFetchInstance('/api/xml/todos');
 
-  /**
-   * Lista todos os todos
-   * @returns {Promise<Array>} Lista de todos
-   */
   static async listarTodos() {
     try {
       const response = await this.fetchInstance.get('/');
@@ -18,11 +15,7 @@ class TodoService extends BaseService {
     }
   }
 
-  /**
-   * Busca um todo por ID
-   * @param {number} id - ID do todo
-   * @returns {Promise<Object>} Todo encontrado
-   */
+
   static async buscarPorId(id) {
     try {
       const response = await this.fetchInstance.get(`/${id}`);
@@ -33,13 +26,7 @@ class TodoService extends BaseService {
     }
   }
 
-  /**
-   * Cria um novo todo
-   * @param {Object} todo - Dados do todo
-   * @param {string} todo.title - Título do todo
-   * @param {string} [todo.user_name] - Nome do usuário
-   * @returns {Promise<Object>} Todo criado
-   */
+
   static async criar(todo) {
     console.log('TodoService.criar - Dados recebidos:', todo);
     
@@ -53,12 +40,7 @@ class TodoService extends BaseService {
     }
   }
 
-  /**
-   * Atualiza um todo
-   * @param {number} id - ID do todo
-   * @param {Object} todo - Dados parciais do todo para atualizar
-   * @returns {Promise<Object>} Todo atualizado
-   */
+
   static async atualizar(id, todo) {
     console.log('TodoService.atualizar - Dados recebidos:', { id, todo });
     
@@ -72,11 +54,6 @@ class TodoService extends BaseService {
     }
   }
 
-  /**
-   * Deleta um todo
-   * @param {number} id - ID do todo
-   * @returns {Promise<void>}
-   */
   static async deletar(id) {
     console.log('TodoService.deletar - ID:', id);
     
@@ -89,11 +66,7 @@ class TodoService extends BaseService {
     }
   }
 
-  /**
-   * Busca todos com suas tasks
-   * @param {number} id - ID do todo
-   * @returns {Promise<Object>} Todo com tasks incluídas
-   */
+
   static async buscarComTasks(id) {
     try {
       const response = await this.fetchInstance.get(`/${id}?include_tasks=true`);
@@ -104,17 +77,40 @@ class TodoService extends BaseService {
     }
   }
 
-  /**
-   * Lista todos de um usuário específico
-   * @param {string} userName - Nome do usuário
-   * @returns {Promise<Array>} Lista de todos do usuário
-   */
+
   static async listarPorUsuario(userName) {
     try {
       const response = await this.fetchInstance.get(`?user_name=${encodeURIComponent(userName)}`);
       return response;
     } catch (error) {
       this.handleError(error, `Erro ao listar todos do usuário ${userName}`);
+      throw error;
+    }
+  }
+
+
+   // --- NOVOS MÉTODOS (XML) ---
+
+  
+  static async listarTodosXml() {
+    try {
+      // Usa a instância de XML e espera uma resposta de texto
+      const response = await this.xmlFetchInstance.get('/');
+      return response;
+    } catch (error) {
+      this.handleError(error, 'Erro ao listar todos em XML');
+      throw error;
+    }
+  }
+
+  
+  static async obterTodoXml(id) {
+    try {
+      // Usa a instância de XML para buscar um item específico
+      const response = await this.xmlFetchInstance.get(`/${id}/`);
+      return response;
+    } catch (error) {
+      this.handleError(error, `Erro ao buscar todo ${id} em XML`);
       throw error;
     }
   }
