@@ -23,6 +23,7 @@ return new class extends Migration
         $table->id();
         $table->foreignId('todo_id')->constrained()->onDelete('cascade'); // pertence a um todo
         $table->string('title');
+         $table->decimal('balance', 10, 2)->default(0); //recompensa da task
         $table->text('description')->nullable();
         $table->boolean('is_completed')->default(false);
         $table->timestamps();
@@ -37,7 +38,7 @@ return new class extends Migration
     {
         //
         Schema::table('tasks', function (Blueprint $table) {
-        $table->dropForeign(['todo_id']); 
+        $table->dropForeign(['todo_id']);
     });
         Schema::dropIfExists('todos');
         Schema::dropIfExists('tasks');

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -17,28 +18,25 @@ class Task extends Model
         // Salva no banco padrão (pgsql)
         parent::save($options);
 
-        // Replicar no MySQL
-        DB::connection('mysql')->table($this->table)->insert([
+        $data = [
+            'todo_id'      => $this->todo_id,
             'title'        => $this->title,
             'description'  => $this->description,
             'is_completed' => $this->is_completed,
             'created_at'   => now(),
             'updated_at'   => now(),
-        ]);
+        ];
 
-        // Replicar no SQLite
-        DB::connection('sqlite')->table($this->table)->insert([
-            'title'        => $this->title,
-            'description'  => $this->description,
-            'is_completed' => $this->is_completed,
-            'created_at'   => now(),
-            'updated_at'   => now(),
-        ]);
+        // Replicar nos outros bancos
+        DB::connection('mysql')->table($this->table)->insert($data);
+        DB::connection('sqlite')->table($this->table)->insert($data);
     }
 
-    public function user()
-{
-    return $this->belongsTo(User::class);
-}
-
+    /**
+     * Relação: Task pertence a um Todo
+     */
+    public function todo()
+    {
+        return $this->belongsTo(Todo::class);
+    }
 }
