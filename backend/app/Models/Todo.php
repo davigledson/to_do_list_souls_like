@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class Todo extends Model
 {
     protected $table = 'todos';
-    protected $fillable = ['title', 'user_id'];
+    protected $fillable = ['title', 'user_name'];
 
     /**
      * Salva no Postgres (padrão) e replica em MySQL + SQLite

@@ -24,7 +24,7 @@ class TaskController extends Controller
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
-           
+            'todo_id' => 'required',
             'description' => 'nullable|string',
             'is_completed' => 'boolean',
         ]);

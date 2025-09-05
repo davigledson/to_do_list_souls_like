@@ -23,51 +23,26 @@ export default class TodoService extends BaseService {
   private static axiosInstance = this.createAxiosInstance('todos');
 
   static async listarTodos(): Promise<Todo[]> {
-    try {
-      const response = await this.axiosInstance.get('/');
-      return response.data;
-    } catch (error) {
-      this.handleError(error, 'Erro ao buscar Todos');
-      throw error;
-    }
+    const response = await this.axiosInstance.get('/');
+    return response.data;
   }
 
   static async buscarPorId(id: number): Promise<Todo> {
-    try {
-      const response = await this.axiosInstance.get(`/${id}`);
-      return response.data;
-    } catch (error) {
-      this.handleError(error, `Erro ao buscar Todo ID ${id}`);
-      throw error;
-    }
+    const response = await this.axiosInstance.get(`/${id}`);
+    return response.data;
   }
 
   static async criar(todo: Omit<Todo, 'id' | 'created_at' | 'updated_at' | 'tasks'>): Promise<Todo> {
-    try {
-      const response = await this.axiosInstance.post('/', todo);
-      return response.data;
-    } catch (error) {
-      this.handleError(error, 'Erro ao criar Todo');
-      throw error;
-    }
+    const response = await this.axiosInstance.post('/', todo);
+    return response.data;
   }
 
   static async atualizar(id: number, todo: Partial<Todo>): Promise<Todo> {
-    try {
-      const response = await this.axiosInstance.put(`/${id}`, todo);
-      return response.data;
-    } catch (error) {
-      this.handleError(error, `Erro ao atualizar Todo ID ${id}`);
-      throw error;
-    }
+    const response = await this.axiosInstance.put(`/${id}`, todo);
+    return response.data;
   }
 
   static async deletar(id: number): Promise<void> {
-    try {
-      await this.axiosInstance.delete(`/${id}`);
-    } catch (error) {
-      this.handleError(error, `Erro ao deletar Todo ID ${id}`);
-      throw error;
-    }
+    await this.axiosInstance.delete(`/${id}`);
   }
 }

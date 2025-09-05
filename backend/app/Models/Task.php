@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 class Task extends Model
 {
     protected $table = 'tasks';
-    protected $fillable = ['title', 'description', 'is_completed'];
+    protected $fillable = ['todo_id','title', 'description', 'is_completed'];
 
     /**
      * Salva no Postgres (padrão) e replica em MySQL + SQLite
