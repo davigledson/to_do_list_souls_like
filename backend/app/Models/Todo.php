@@ -29,7 +29,16 @@ class Todo extends Model
         DB::connection('mysql')->table($this->table)->insert($data);
         DB::connection('sqlite')->table($this->table)->insert($data);
     }
+public function saveConditionally(array $options = [])
+{
+    $connections = config('database.connections');
 
+    if (count($connections) > 1) { // mais de uma conexão
+        $this->saveWithReplication($options);
+    } else {
+        $this->save($options);
+    }
+}
     /**
      * Relação: um Todo tem várias Tasks
      */

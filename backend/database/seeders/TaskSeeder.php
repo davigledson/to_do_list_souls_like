@@ -34,9 +34,12 @@ class TaskSeeder extends Seeder
             ],
         ];
 
-        foreach ($tasks as $taskData) {
-            $task = new Task($taskData);
-            $task->saveWithReplication(); // salva no pgsql + replica
-        }
+       foreach ($tasks as $taskData) {
+    $task = new Task($taskData);
+    $task->saveConditionally();
     }
+
+    }
+
+
 }

@@ -15,9 +15,11 @@ class TodoSeeder extends Seeder
             ['title' => 'Tarefas do Trabalho', 'user_name' => 'Carlos'],
         ];
 
-        foreach ($todos as $todoData) {
-            $todo = new Todo($todoData);
-           $todo->saveWithReplication(); // salva no pgsql + replica
-        }
+
+
+    foreach ($todos as $todoData) {
+    $todo = new todo($todoData);
+    $todo->saveConditionally();
+    }
     }
 }

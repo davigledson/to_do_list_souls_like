@@ -32,6 +32,17 @@ class Task extends Model
         DB::connection('sqlite')->table($this->table)->insert($data);
     }
 
+    public function saveConditionally(array $options = [])
+{
+    $connections = config('database.connections');
+
+    if (count($connections) > 1) { // mais de uma conexão
+        $this->saveWithReplication($options);
+    } else {
+        $this->save($options);
+    }
+}
+
     /**
      * Relação: Task pertence a um Todo
      */
