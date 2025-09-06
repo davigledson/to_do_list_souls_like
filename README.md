@@ -1,6 +1,12 @@
 ## TodoList Soulslike 🗡️
 Uma experiencia souls-like de fazer de lista de tarefas épica, oferecendo múltiplas arquiteturas e tecnologias para uma experiência completa de desenvolvimento.
 
+##  Visão Geral
+- Backend feito com PHP e laravel 12, com migrações, seeders e comandos criados
+
+- Frontend vanila com efeitos 3d nos cards, requisições  de api feito via Fetch
+- Frontend com framework Nest.js com Tailwind e Axios para as requisições  
+- Frontend Mobile com react-native e Expo 
 
 # Arquitetura do Projeto
 todolist-soulslike/

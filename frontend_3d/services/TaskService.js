@@ -7,7 +7,7 @@ class TaskService extends BaseService {
   static async criar(task) {
     console.log('TaskService.criar - Dados recebidos:', task);
     
-    // Garantir que todos os campos obrigatórios estão presentes
+    
     const taskData = {
       title: task.title,
       description: task.description || null,

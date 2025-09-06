@@ -1,6 +1,5 @@
 // services/BaseService.js
 
-// A URL base agora aponta para a raiz do servidor, não para a API
 const BASE_URL = 'http://localhost:8000'; 
 
 class BaseService {
@@ -9,7 +8,7 @@ class BaseService {
     const fullBaseURL = `${BASE_URL}${baseURL}`; // Monta a URL completa
     const defaultHeaders = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json', // O _request vai sobrescrever isso se necessário
+      'Accept': 'application/json', 
     };
 
     return {

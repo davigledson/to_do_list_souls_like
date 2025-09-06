@@ -118,7 +118,6 @@
   </div>
 
   <script type="module">
-    // Importar os serviços reais
     import TodoService from './services/TodoService.js';
     import TaskService from './services/TaskService.js';
 
@@ -162,12 +161,11 @@
           if (e.target.classList.contains('modal')) {
             this.closeTodoModal();
             this.closeTaskModal();
-            this.closeXmlModal(); // Adicionado para fechar o modal XML também
+            this.closeXmlModal(); 
           }
         });
       }
 
-      // Atualiza o status na interface
       updateStatus(message, type = 'info') {
         const statusEl = document.getElementById('status-text');
         if (statusEl) {
@@ -176,7 +174,6 @@
         }
       }
 
-      // Formata data
       formatDate(dateString) {
         try {
           const date = new Date(dateString);
@@ -496,17 +493,14 @@
         }
       }
 
-      // === UTILITY METHODS ===
       renderError(listId, message) {
         const ul = document.getElementById(listId);
         ul.innerHTML = `<li class="error">${message}</li>`;
       }
     }
 
-    // Criar instância global da aplicação
     window.app = new App();
     
-    // Inicializar quando a página carregar
     document.addEventListener('DOMContentLoaded', () => {
       window.app.init();
     });
