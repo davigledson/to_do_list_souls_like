@@ -141,7 +141,11 @@ http://127.0.0.1:5500/frontend_3d/
 ```
 
 ### visão geral
-[front_3d](./media/front_vanila.mp4)
+
+
+
+https://github.com/user-attachments/assets/766623d3-b77c-460f-ae10-056c11be4022
+
 
 ## Configurar Frontend Next.js
 
@@ -159,7 +163,11 @@ http://localhost:3000/
  
 ```
 ### visão geral
-[scalar](./media/front_next.mp4)
+
+
+https://github.com/user-attachments/assets/d5522116-26e6-4437-b4be-63433d559e42
+
+
 
 
 
@@ -184,6 +192,12 @@ http://localhost:8081
 npx expo run:android
 
 ```
+### visão geral
+
+
+https://github.com/user-attachments/assets/f63e0f31-b54b-471b-8f9c-3cf3ab0d391e
+
+
 
 ## Documentação da API
 
@@ -205,15 +219,27 @@ php artisan scribe:generate
 - Recursos: Visualização interativa, exemplos de código, teste de endpoints (apenas GET)
 
 ### visão geral
-[scalar](./media/scalar.mp4)
+https://github.com/user-attachments/assets/d69cfdef-1961-4945-8497-601dcf8d4ec8
+
+
+
+
+
 
 
 ## Scribe (Interface Tradicional)
+
+
+https://github.com/user-attachments/assets/ad2801e2-673a-4851-8a67-ac55acb1f9af
+
 
 - URL: http://localhost:8000/docs
 - Características:  Documentação HTML estática completa
 
 - Recursos: Exemplos completos, Postman collection, OpenAPI spec
+
+### visão geral
+
 
 ### Endpoints Principais
 #### (todos - lista de tarefas)
