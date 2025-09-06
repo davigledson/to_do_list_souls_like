@@ -8,6 +8,9 @@ Uma experiencia souls-like de fazer de lista de tarefas épica, oferecendo múlt
 - Frontend com framework Nest.js com Tailwind e Axios para as requisições  
 - Frontend Mobile com react-native e Expo 
 
+ #### Nota: iria ter transpiladores para outras linguagens, + 2 bancos de dados não relacionais (mongol e ArangoDB) e implementação de criptmoedas
+ #### Só que ai lancou Hollow Knight Silksong 🤙
+
 # Arquitetura do Projeto
 todolist-soulslike/
 |
